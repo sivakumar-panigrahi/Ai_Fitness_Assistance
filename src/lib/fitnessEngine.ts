@@ -10,6 +10,18 @@ import {
   ConditionType,
   DiseaseStage,
 } from '@/types/fitness';
+import { VIDEO_ROUTINES } from './videoData';
+
+export function getDailyVideos(age: number) {
+  // 1. Determine Category (Matching your existing logic)
+  const group = age <= 18 ? 'teen' : age <= 45 ? 'young' : 'senior';
+
+  // 2. Get current day (1-7)
+  const day = new Date().getDay() || 7; // Sunday becomes 7
+
+  // 3. Return the specific IDs
+  return VIDEO_ROUTINES[group][day];
+}
 
 // Calculate BMI
 export function calculateBMI(weight: number, height: number): number {
@@ -136,10 +148,10 @@ function getExerciseRecommendations(profile: UserProfile, bmiCategory: BMICatego
   const exercises: Exercise[] = [];
   const hasSerious = profile.healthConditions.some(c => c.stage === 'stage2');
   const hasMild = profile.healthConditions.some(c => c.stage === 'stage1');
-  
+
   if (ageGroup === 'senior' || hasSerious) {
     exercises.push(...exerciseDatabase.lowIntensity.slice(0, 3));
-  } 
+  }
   else if (hasMild || bmiCategory === 'overweight') {
     exercises.push(...exerciseDatabase.lowIntensity.slice(0, 2));
     exercises.push(...exerciseDatabase.mediumIntensity.slice(0, 2));
@@ -155,17 +167,17 @@ function getExerciseRecommendations(profile: UserProfile, bmiCategory: BMICatego
     exercises.push(...exerciseDatabase.lowIntensity.slice(0, 2));
     exercises.push(...exerciseDatabase.mediumIntensity.slice(0, 1));
   }
-  
+
   return exercises;
 }
 
 // Get yoga recommendations
 function getYogaRecommendations(profile: UserProfile, ageGroup: AgeGroup): YogaVideo[] {
   const videos: YogaVideo[] = [];
-  
+
   const morningYoga = yogaVideos.find(v => v.title.includes('Morning'));
   if (morningYoga) videos.push(morningYoga);
-  
+
   profile.healthConditions.forEach(condition => {
     const conditionVideo = yogaVideos.find(
       v => v.targetCondition === condition.type
@@ -174,21 +186,21 @@ function getYogaRecommendations(profile: UserProfile, ageGroup: AgeGroup): YogaV
       videos.push(conditionVideo);
     }
   });
-  
+
   if (ageGroup === 'senior') {
     const seniorYoga = yogaVideos.find(v => v.targetCondition === 'senior');
     if (seniorYoga && !videos.includes(seniorYoga)) {
       videos.push(seniorYoga);
     }
   }
-  
+
   if (videos.length < 3) {
     const generalYoga = yogaVideos.find(
       v => v.targetCondition === 'general' && !videos.includes(v)
     );
     if (generalYoga) videos.push(generalYoga);
   }
-  
+
   return videos.slice(0, 4);
 }
 
@@ -196,7 +208,7 @@ function getYogaRecommendations(profile: UserProfile, ageGroup: AgeGroup): YogaV
 function getDietPlan(profile: UserProfile, bmiCategory: BMICategory): DietPlan {
   const guidelines: string[] = [];
   const restrictions: string[] = [];
-  
+
   profile.healthConditions.forEach(condition => {
     switch (condition.type) {
       case 'diabetes':
@@ -225,7 +237,7 @@ function getDietPlan(profile: UserProfile, bmiCategory: BMICategory): DietPlan {
         break;
     }
   });
-  
+
   if (bmiCategory === 'underweight') {
     guidelines.push('Include calorie-dense healthy foods');
     guidelines.push('Add nuts and dry fruits to meals');
@@ -233,7 +245,7 @@ function getDietPlan(profile: UserProfile, bmiCategory: BMICategory): DietPlan {
     guidelines.push('Focus on high-protein, low-carb meals');
     guidelines.push('Fill half your plate with vegetables');
   }
-  
+
   if (guidelines.length === 0) {
     guidelines.push('Eat a balanced diet with all food groups');
     guidelines.push('Stay hydrated - drink 8 glasses of water daily');
@@ -272,7 +284,7 @@ function getDietPlan(profile: UserProfile, bmiCategory: BMICategory): DietPlan {
       calories: 400,
     },
   ];
-  
+
   return { meals, guidelines, restrictions };
 }
 
@@ -366,7 +378,7 @@ function getSleepRecommendation(age: number): SleepRecommendation {
 // Get warnings based on conditions
 function getWarnings(profile: UserProfile): string[] {
   const warnings: string[] = [];
-  
+
   profile.healthConditions.forEach(condition => {
     if (condition.stage === 'stage2') {
       warnings.push(
@@ -374,16 +386,16 @@ function getWarnings(profile: UserProfile): string[] {
       );
     }
   });
-  
+
   if (profile.age > 60) {
     warnings.push('👨‍⚕️ For individuals over 60, we recommend a health check-up before starting new exercises.');
   }
-  
+
   const bmi = calculateBMI(profile.weight, profile.height);
   if (bmi > 35) {
     warnings.push('🏥 Your BMI indicates severe obesity. Please consult a doctor for a personalized plan.');
   }
-  
+
   return warnings;
 }
 
@@ -392,7 +404,7 @@ export function generateRecommendations(profile: UserProfile): FitnessRecommenda
   const bmi = calculateBMI(profile.weight, profile.height);
   const bmiCategory = getBMICategory(bmi);
   const ageGroup = getAgeGroup(profile.age);
-  
+
   return {
     exercises: getExerciseRecommendations(profile, bmiCategory, ageGroup),
     yogaVideos: getYogaRecommendations(profile, ageGroup),

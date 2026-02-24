@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
-import { 
+import {
   Activity, Dumbbell, Salad, Moon, Trophy, Play, ExternalLink,
   AlertTriangle, Flame, Target, TrendingUp, Heart, Clock,
   RefreshCw, LogOut, Loader2, Sparkles, Zap, Camera,
@@ -13,7 +13,8 @@ import {
 } from 'lucide-react';
 import { UserStreak, UserBadge, HealthData, Profile, ProgressRecord } from '@/hooks/useUserData';
 import { ExerciseTracker } from './ExerciseTracker';
-import { getAgeGroupLabel } from '@/lib/fitnessEngine';
+import { getAgeGroupLabel, getDailyVideos } from '@/lib/fitnessEngine';
+import { VideoPlayer } from './VideoPlayer';
 
 interface DashboardNewProps {
   profile: Profile;
@@ -56,9 +57,9 @@ function getDailyQuote(): string {
   return motivationalQuotes[dayOfYear % motivationalQuotes.length];
 }
 
-export function DashboardNew({ 
+export function DashboardNew({
   profile, healthData, recommendations, streak, badges, progressHistory,
-  onCompleteWorkout, onUpdateData, onLogout, isGenerating 
+  onCompleteWorkout, onUpdateData, onLogout, isGenerating
 }: DashboardNewProps) {
   const [completingWorkout, setCompletingWorkout] = useState(false);
   const [activeTab, setActiveTab] = useState(() => localStorage.getItem('fitcoach-active-tab') || 'exercises');
@@ -71,6 +72,7 @@ export function DashboardNew({
   const bmi = healthData.weight / (healthData.height * healthData.height);
   const bmiCategory = bmi < 18.5 ? 'underweight' : bmi < 25 ? 'normal' : bmi < 30 ? 'overweight' : 'obese';
   const ageGroupLabel = getAgeGroupLabel(healthData.age);
+  const dailyVideos = getDailyVideos(healthData.age);
   const greeting = getGreeting();
   const GreetingIcon = greeting.icon;
 
@@ -116,7 +118,7 @@ export function DashboardNew({
               <p className="text-sm text-muted-foreground">
                 {ageGroupLabel} • BMI: <span className={
                   bmiCategory === 'normal' ? 'text-emerald-600' :
-                  bmiCategory === 'underweight' ? 'text-amber-600' : 'text-red-500'
+                    bmiCategory === 'underweight' ? 'text-amber-600' : 'text-red-500'
                 }>{bmi.toFixed(1)}</span> ({bmiCategory})
                 {weightChange !== 0 && (
                   <span className={weightChange < 0 ? 'text-emerald-600' : 'text-amber-600'}>
@@ -219,38 +221,51 @@ export function DashboardNew({
                   Complete Workout
                 </button>
               </div>
-              <div className="grid gap-3 md:grid-cols-2">
-                {recommendations.exercises?.map((exercise, i) => (
-                  <div key={i} className="bg-white rounded-2xl border border-gray-100 overflow-hidden group hover:shadow-lg transition-all duration-300">
-                    {(exercise as any).imageUrl && (
-                      <div className="aspect-video bg-gray-100 overflow-hidden">
-                        <img src={(exercise as any).imageUrl} alt={`${exercise.name} demonstration`}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
-                      </div>
-                    )}
-                    <div className="p-4">
-                      <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-xl shrink-0">
-                          {exercise.icon || '🏋️'}
+              <div className="space-y-4">
+                <div className="bg-gray-900/5 p-4 rounded-2xl border border-gray-900/10">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Sparkles className="w-4 h-4 text-orange-500" />
+                    <h4 className="text-sm font-semibold text-gray-900">Today's Recommended Routines</h4>
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {dailyVideos.exercise.map((id) => (
+                      <VideoPlayer key={id} videoId={id} title="Workout Session" />
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-2">
+                  {recommendations.exercises?.map((exercise, i) => (
+                    <div key={i} className="bg-white rounded-2xl border border-gray-100 overflow-hidden group hover:shadow-lg transition-all duration-300">
+                      {(exercise as any).imageUrl && (
+                        <div className="aspect-video bg-gray-100 overflow-hidden">
+                          <img src={(exercise as any).imageUrl} alt={`${exercise.name} demonstration`}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
                         </div>
-                        <div className="flex-1 min-w-0">
-                          <h4 className="font-display font-semibold text-foreground">{exercise.name}</h4>
-                          <p className="text-xs text-muted-foreground mb-2">{exercise.description}</p>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-xs text-muted-foreground">
-                              <Clock className="w-3 h-3" /> {exercise.duration}
-                            </span>
-                            <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${
-                              exercise.intensity === 'low' ? 'bg-emerald-100 text-emerald-700' :
-                              exercise.intensity === 'medium' ? 'bg-amber-100 text-amber-700' :
-                              'bg-red-100 text-red-700'
-                            }`}>{exercise.intensity}</span>
+                      )}
+                      <div className="p-4">
+                        <div className="flex items-start gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center text-xl shrink-0">
+                            {exercise.icon || '🏋️'}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <h4 className="font-display font-semibold text-foreground">{exercise.name}</h4>
+                            <p className="text-xs text-muted-foreground mb-2">{exercise.description}</p>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-xs text-muted-foreground">
+                                <Clock className="w-3 h-3" /> {exercise.duration}
+                              </span>
+                              <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${exercise.intensity === 'low' ? 'bg-emerald-100 text-emerald-700' :
+                                  exercise.intensity === 'medium' ? 'bg-amber-100 text-amber-700' :
+                                    'bg-red-100 text-red-700'
+                                }`}>{exercise.intensity}</span>
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
+                </div>
               </div>
             </TabsContent>
 
@@ -261,32 +276,46 @@ export function DashboardNew({
             {/* Yoga Tab */}
             <TabsContent value="yoga" className="space-y-4">
               <h3 className="text-lg font-display font-semibold">Recommended Yoga</h3>
-              <div className="grid gap-3 md:grid-cols-2">
-                {recommendations.yogaVideos?.map((video, i) => (
-                  <div key={i} className="bg-white rounded-2xl border border-gray-100 overflow-hidden group hover:shadow-lg transition-all duration-300">
-                    <div className="relative aspect-video bg-gray-100 overflow-hidden">
-                      <img src={video.thumbnail || `https://img.youtube.com/vi/${video.url.split('v=')[1]?.split('&')[0]}/hqdefault.jpg`}
-                        alt={video.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
-                      <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                        <a href={video.url} target="_blank" rel="noopener noreferrer"
-                          className="w-14 h-14 rounded-full bg-white flex items-center justify-center hover:scale-110 transition-transform">
-                          <Play className="w-6 h-6 text-gray-900 fill-gray-900" />
-                        </a>
-                      </div>
-                    </div>
-                    <div className="p-3">
-                      <h4 className="font-display font-semibold text-sm mb-1">{video.title}</h4>
-                      <div className="flex items-center gap-2 flex-wrap">
-                        <span className="px-2 py-0.5 rounded-full bg-gray-100 text-xs text-muted-foreground">{video.duration}</span>
-                        <span className="px-2 py-0.5 rounded-full bg-gray-100 text-xs text-muted-foreground capitalize">{video.difficulty}</span>
-                        <a href={video.url} target="_blank" rel="noopener noreferrer"
-                          className="ml-auto text-blue-600 hover:underline text-xs flex items-center gap-1">
-                          Watch <ExternalLink className="w-3 h-3" />
-                        </a>
-                      </div>
-                    </div>
+              <div className="space-y-4">
+                <div className="bg-rose-50/50 p-4 rounded-2xl border border-rose-100">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Sparkles className="w-4 h-4 text-rose-500" />
+                    <h4 className="text-sm font-semibold text-gray-900">Today's Guided Yoga</h4>
                   </div>
-                ))}
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {dailyVideos.yoga.map((id) => (
+                      <VideoPlayer key={id} videoId={id} title="Yoga Practice" />
+                    ))}
+                  </div>
+                </div>
+
+                <div className="grid gap-3 md:grid-cols-2">
+                  {recommendations.yogaVideos?.map((video, i) => (
+                    <div key={i} className="bg-white rounded-2xl border border-gray-100 overflow-hidden group hover:shadow-lg transition-all duration-300">
+                      <div className="relative aspect-video bg-gray-100 overflow-hidden">
+                        <img src={video.thumbnail || `https://img.youtube.com/vi/${video.url.split('v=')[1]?.split('&')[0]}/hqdefault.jpg`}
+                          alt={video.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <a href={video.url} target="_blank" rel="noopener noreferrer"
+                            className="w-14 h-14 rounded-full bg-white flex items-center justify-center hover:scale-110 transition-transform">
+                            <Play className="w-6 h-6 text-gray-900 fill-gray-900" />
+                          </a>
+                        </div>
+                      </div>
+                      <div className="p-3">
+                        <h4 className="font-display font-semibold text-sm mb-1">{video.title}</h4>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className="px-2 py-0.5 rounded-full bg-gray-100 text-xs text-muted-foreground">{video.duration}</span>
+                          <span className="px-2 py-0.5 rounded-full bg-gray-100 text-xs text-muted-foreground capitalize">{video.difficulty}</span>
+                          <a href={video.url} target="_blank" rel="noopener noreferrer"
+                            className="ml-auto text-blue-600 hover:underline text-xs flex items-center gap-1">
+                            Watch <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
               </div>
             </TabsContent>
 
