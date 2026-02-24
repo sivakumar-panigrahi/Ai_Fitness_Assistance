@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
 import { Button } from '@/components/ui/button';
@@ -30,16 +30,26 @@ const MAX_LOGIN_ATTEMPTS = 5;
 const LOCKOUT_DURATION_MS = 60 * 1000;
 
 export default function Auth() {
-  const { user, loading: authLoading, signUp, signIn } = useAuth();
+  const { user, loading: authLoading, signUp, signIn, resetPassword, updatePassword } = useAuth();
   const [loading, setLoading] = useState(false);
   const [isSignUp, setIsSignUp] = useState(false);
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [isRecovery, setIsRecovery] = useState(false);
   const [signUpForm, setSignUpForm] = useState({ name: '', email: '', password: '', confirmPassword: '' });
   const [signInForm, setSignInForm] = useState({ email: '', password: '' });
+  const [resetForm, setResetForm] = useState({ password: '', confirmPassword: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [showSignInPassword, setShowSignInPassword] = useState(false);
   const loginAttemptsRef = useRef<number>(0);
   const lockoutUntilRef = useRef<number>(0);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('type') === 'recovery') {
+      setIsRecovery(true);
+    }
+  }, []);
 
   if (authLoading) {
     return (
@@ -97,6 +107,47 @@ export default function Auth() {
     }
   };
 
+  const handleResetPasswordRequest = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!signInForm.email) {
+      toast.error('Please enter your email address');
+      return;
+    }
+    setLoading(true);
+    const { error } = await resetPassword(signInForm.email);
+    setLoading(false);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success('Password reset link sent! Check your email.');
+      setIsForgotPassword(false);
+    }
+  };
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (resetForm.password !== resetForm.confirmPassword) {
+      toast.error("Passwords don't match");
+      return;
+    }
+    if (resetForm.password.length < 8) {
+      toast.error("Password must be at least 8 characters");
+      return;
+    }
+
+    setLoading(true);
+    const { error } = await updatePassword(resetForm.password);
+    setLoading(false);
+
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success('Password updated successfully!');
+      setIsRecovery(false);
+      setResetForm({ password: '', confirmPassword: '' });
+    }
+  };
+
   const inputClass = "h-12 bg-gray-50 border-gray-200 text-foreground placeholder:text-muted-foreground focus:border-gray-400 focus:ring-gray-400 rounded-xl";
 
   return (
@@ -116,14 +167,59 @@ export default function Auth() {
 
           <div className="text-center mb-6">
             <h2 className="text-xl font-display font-semibold text-foreground">
-              {isSignUp ? 'Create Your Account' : 'Welcome Back'}
+              {isRecovery ? 'Set New Password' : isForgotPassword ? 'Reset Password' : isSignUp ? 'Create Your Account' : 'Welcome Back'}
             </h2>
             <p className="text-sm text-muted-foreground mt-1">
-              {isSignUp ? 'Start your fitness journey today' : 'Continue your fitness journey'}
+              {isRecovery ? 'Choose a strong new password' : isForgotPassword ? 'Enter your email to receive a reset link' : isSignUp ? 'Start your fitness journey today' : 'Continue your fitness journey'}
             </p>
           </div>
 
-          {isSignUp ? (
+          {isRecovery ? (
+            <form onSubmit={handleUpdatePassword} className="space-y-4">
+              <div className="relative">
+                <Input type={showPassword ? "text" : "password"} placeholder="New password" value={resetForm.password}
+                  onChange={(e) => setResetForm({ ...resetForm, password: e.target.value })}
+                  className={`${inputClass} pr-11`} required />
+                <button type="button" onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" tabIndex={-1}>
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              <div className="relative">
+                <Input type={showConfirmPassword ? "text" : "password"} placeholder="Confirm new password" value={resetForm.confirmPassword}
+                  onChange={(e) => setResetForm({ ...resetForm, confirmPassword: e.target.value })}
+                  className={`${inputClass} pr-11`} required />
+                <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" tabIndex={-1}>
+                  {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                </button>
+              </div>
+              <button type="submit" disabled={loading}
+                className="w-full h-12 mt-2 rounded-full bg-gray-900 text-white font-semibold text-sm hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
+                {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                Update Password
+              </button>
+              <button type="button" onClick={() => setIsRecovery(false)}
+                className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Back to Login
+              </button>
+            </form>
+          ) : isForgotPassword ? (
+            <form onSubmit={handleResetPasswordRequest} className="space-y-4">
+              <Input type="email" placeholder="Email address" value={signInForm.email}
+                onChange={(e) => setSignInForm({ ...signInForm, email: e.target.value })}
+                className={inputClass} required />
+              <button type="submit" disabled={loading}
+                className="w-full h-12 mt-2 rounded-full bg-gray-900 text-white font-semibold text-sm hover:bg-gray-800 transition-colors flex items-center justify-center gap-2 disabled:opacity-50">
+                {loading && <Loader2 className="w-4 h-4 animate-spin" />}
+                Send Reset Link
+              </button>
+              <button type="button" onClick={() => setIsForgotPassword(false)}
+                className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Back to Login
+              </button>
+            </form>
+          ) : isSignUp ? (
             <form onSubmit={handleSignUp} className="space-y-4">
               <Input type="text" placeholder="Your name" value={signUpForm.name}
                 onChange={(e) => setSignUpForm({ ...signUpForm, name: e.target.value })}
@@ -171,6 +267,12 @@ export default function Auth() {
                   <button type="button" onClick={() => setShowSignInPassword(!showSignInPassword)}
                     className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" tabIndex={-1}>
                     {showSignInPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+                <div className="text-right mt-1">
+                  <button type="button" onClick={() => setIsForgotPassword(true)}
+                    className="text-xs text-muted-foreground hover:text-foreground transition-colors">
+                    Forgot password?
                   </button>
                 </div>
               </div>
