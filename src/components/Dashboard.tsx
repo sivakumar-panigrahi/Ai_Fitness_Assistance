@@ -21,7 +21,8 @@ import {
   Target,
   TrendingUp,
   Heart,
-  Clock
+  Clock,
+  Sparkles
 } from 'lucide-react';
 
 interface DashboardProps {
