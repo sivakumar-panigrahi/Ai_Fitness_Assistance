@@ -205,19 +205,65 @@ export function Dashboard({ profile, recommendations, onLogout }: DashboardProps
               </Button>
             </div>
             <div className="grid gap-4 md:grid-cols-2">
-              {dailyVideos.exercise.map((id) => (
-                <VideoPlayer key={id} videoId={id} title="Workout Session" />
+              {recommendations.exercises.map((exercise, i) => (
+                <Card key={i} className="card-hover shadow-soft overflow-hidden" style={{ animationDelay: `${i * 100}ms` }}>
+                  <CardContent className="p-5">
+                    <div className="flex items-start gap-4">
+                      <div className="w-14 h-14 rounded-xl bg-muted flex items-center justify-center text-2xl">
+                        {exercise.icon}
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-lg">{exercise.name}</h4>
+                        <p className="text-sm text-muted-foreground mb-2">{exercise.description}</p>
+                        <div className="flex items-center gap-3">
+                          <Badge variant="secondary" className="gap-1">
+                            <Clock className="w-3 h-3" />
+                            {exercise.duration}
+                          </Badge>
+                          <Badge
+                            className={
+                              exercise.intensity === 'low' ? 'bg-success text-success-foreground' :
+                                exercise.intensity === 'medium' ? 'bg-warning text-warning-foreground' :
+                                  'bg-destructive text-destructive-foreground'
+                            }
+                          >
+                            {exercise.intensity} intensity
+                          </Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               ))}
             </div>
           </TabsContent>
 
           {/* Yoga Tab */}
           <TabsContent value="yoga" className="space-y-4 animate-fade-in">
-            <h3 className="text-xl font-display font-semibold">Recommended Yoga Sessions</h3>
-            <div className="grid gap-4 md:grid-cols-2">
-              {dailyVideos.yoga.map((id) => (
-                <VideoPlayer key={id} videoId={id} title="Yoga Practice" />
-              ))}
+            <div className="space-y-6">
+              <div className="bg-primary/5 p-6 rounded-2xl border border-primary/10">
+                <div className="flex items-center gap-2 mb-4">
+                  <Sparkles className="w-5 h-5 text-orange-500" />
+                  <h4 className="font-display font-semibold text-lg">Today's Recommended Routines</h4>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  {dailyVideos.exercise.map((id) => (
+                    <VideoPlayer key={id} videoId={id} title="Workout Session" />
+                  ))}
+                </div>
+              </div>
+
+              <div className="bg-rose-50 p-6 rounded-2xl border border-rose-100">
+                <div className="flex items-center gap-2 mb-4">
+                  <Sparkles className="w-5 h-5 text-rose-500" />
+                  <h4 className="font-display font-semibold text-lg">Today's Guided Yoga</h4>
+                </div>
+                <div className="grid gap-4 md:grid-cols-2">
+                  {dailyVideos.yoga.map((id) => (
+                    <VideoPlayer key={id} videoId={id} title="Yoga Practice" />
+                  ))}
+                </div>
+              </div>
             </div>
           </TabsContent>
 

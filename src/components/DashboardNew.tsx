@@ -222,17 +222,7 @@ export function DashboardNew({
                 </button>
               </div>
               <div className="space-y-4">
-                <div className="bg-gray-900/5 p-4 rounded-2xl border border-gray-900/10">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Sparkles className="w-4 h-4 text-orange-500" />
-                    <h4 className="text-sm font-semibold text-gray-900">Today's Recommended Routines</h4>
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {dailyVideos.exercise.map((id) => (
-                      <VideoPlayer key={id} videoId={id} title="Workout Session" />
-                    ))}
-                  </div>
-                </div>
+
 
                 <div className="grid gap-3 md:grid-cols-2">
                   {recommendations.exercises?.map((exercise, i) => (
@@ -256,8 +246,8 @@ export function DashboardNew({
                                 <Clock className="w-3 h-3" /> {exercise.duration}
                               </span>
                               <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${exercise.intensity === 'low' ? 'bg-emerald-100 text-emerald-700' :
-                                  exercise.intensity === 'medium' ? 'bg-amber-100 text-amber-700' :
-                                    'bg-red-100 text-red-700'
+                                exercise.intensity === 'medium' ? 'bg-amber-100 text-amber-700' :
+                                  'bg-red-100 text-red-700'
                                 }`}>{exercise.intensity}</span>
                             </div>
                           </div>
@@ -277,15 +267,29 @@ export function DashboardNew({
             <TabsContent value="yoga" className="space-y-4">
               <h3 className="text-lg font-display font-semibold">Recommended Yoga</h3>
               <div className="space-y-4">
-                <div className="bg-rose-50/50 p-4 rounded-2xl border border-rose-100">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Sparkles className="w-4 h-4 text-rose-500" />
-                    <h4 className="text-sm font-semibold text-gray-900">Today's Guided Yoga</h4>
+                <div className="grid gap-4 md:grid-cols-1 lg:grid-cols-2">
+                  <div className="bg-gray-900/5 p-4 rounded-2xl border border-gray-900/10">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Sparkles className="w-4 h-4 text-orange-500" />
+                      <h4 className="text-sm font-semibold text-gray-900">Today's Recommended Routines</h4>
+                    </div>
+                    <div className="grid gap-2">
+                      {dailyVideos.exercise.map((id) => (
+                        <VideoPlayer key={id} videoId={id} title="Workout Session" />
+                      ))}
+                    </div>
                   </div>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    {dailyVideos.yoga.map((id) => (
-                      <VideoPlayer key={id} videoId={id} title="Yoga Practice" />
-                    ))}
+
+                  <div className="bg-rose-50/50 p-4 rounded-2xl border border-rose-100">
+                    <div className="flex items-center gap-2 mb-3">
+                      <Sparkles className="w-4 h-4 text-rose-500" />
+                      <h4 className="text-sm font-semibold text-gray-900">Today's Guided Yoga</h4>
+                    </div>
+                    <div className="grid gap-2">
+                      {dailyVideos.yoga.map((id) => (
+                        <VideoPlayer key={id} videoId={id} title="Yoga Practice" />
+                      ))}
+                    </div>
                   </div>
                 </div>
 
