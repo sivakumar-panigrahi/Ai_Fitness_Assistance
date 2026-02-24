@@ -1,7 +1,7 @@
 // src/components/VideoPlayer.tsx
 export function VideoPlayer({ videoId, title }: { videoId: string; title: string }) {
     return (
-        <div className="aspect-video w-full rounded-xl overflow-hidden shadow-sm bg-muted">
+        <div className="aspect-video w-full rounded-xl overflow-hidden shadow-soft bg-muted">
             <iframe
                 width="100%"
                 height="100%"
